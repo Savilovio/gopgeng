@@ -33,3 +33,6 @@ class Button(pygame.sprite.Sprite):
                 else: return False
             else: return False
         else: return False
+            
+    def pos_obj(self, x, y):
+        return self.rect.collidepoint(x,y)

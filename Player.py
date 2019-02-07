@@ -1,32 +1,35 @@
+# -*- coding: utf-8 -*-
 from pygame import *
 import pyganim
 
 
-MOVE_SPEED = 30
+MOVE_SPEED = 50
 WIDTH = 22
 HEIGHT = 32
 COLOR =  "#888888"
+JUMP_POWER = 50
+GRAVITY = 3
 ANIMATION_DELAY = 1
-ANIMATION_RIGHT = [('image/anim/r0.png'),
-            ('image/anim/r1.png'),
+ANIMATION_RIGHT = [('image/anim/r1.png'),
             ('image/anim/r2.png')]
 ANIMATION_LEFT = [('image/anim/l0.png'),
             ('image/anim/l1.png'),
             ('image/anim/l2.png')]
 ANIMATION_STAY = [('image/anim/r0.png', ANIMATION_DELAY)]
+ANIMATION_JUMP = [('image/anim/jr.png')]
 PLATFORM_WIDTH = 32
 PLATFORM_HEIGHT = 32
 PLATFORM_COLOR = "#FF6262"
 
 class Player(sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, image_filename):
         sprite.Sprite.__init__(self)
         self.xvel = 0
         self.startX = x
         self.startY = y
         self.image = Surface((WIDTH,HEIGHT))
-        self.image = image.load ("image/heros/hero.jpg") 
-        self.rect = Rect(x, y, WIDTH, HEIGHT)
+        self.image = image.load (image_filename) 
+        self.   rect = Rect(x, y, WIDTH, HEIGHT)
         self.yvel = 0
         self.onGround = False
         self.image.set_colorkey(Color(COLOR))
@@ -41,58 +44,45 @@ class Player(sprite.Sprite):
              boltAnim.append((anim, ANIMATION_DELAY))
         self.boltAnimLeft = pyganim.PygAnimation(boltAnim)
         self.boltAnimLeft.play()
-        self.boltAnimStay = pyganim.PygAnimation(ANIMATION_STAY)
-        self.boltAnimStay.play()
-        self.boltAnimStay.blit(self.image, (0, 0))
-        self.boltAnimJumpLeft= pyganim.PygAnimation(ANIMATION_JUMP_LEFT)
-        self.boltAnimJumpLeft.play()      
-        self.boltAnimJumpRight= pyganim.PygAnimation(ANIMATION_JUMP_RIGHT)
-        self.boltAnimJumpRight.play()
-        
-        self.boltAnimJump= pyganim.PygAnimation(ANIMATION_JUMP)
-        self.boltAnimJump.play()
-        for anim in ANIMATION_LEFT:
+        boltAnim = []
+        for anim in ANIMATION_JUMP:
             boltAnim.append((anim, ANIMATION_DELAY))
-    def update(self, left, right, up, platforms): 
-        if up:
-            if self.onGround:
-                self.yvel = -JUMP_POWER
-                self.image.fill(Color(COLOR))
-                self.boltAnimJump.blit(self.image, (0, 0))
+        self.boltAnimJump = pyganim.PygAnimation(boltAnim)
+        self.boltAnimJump.play()
+
+
+                
+    def update(self, left, right, up, down): 
+        #if go:
+            
         if left:
             self.xvel = -MOVE_SPEED 
-            self.image.fill(Color(COLOR))
         if right:
-            self.xvel = MOVE_SPEED 
-            self.image.fill(Color(COLOR))
-        if not(left or right):
-            self.xvel = 0
-        if not self.onGround:
-            self.yvel += GRAVITY
+            self.xvel = MOVE_SPEED             
+        if up:
+            self.yvel = JUMP_POWER
+        if down:
+            self.yvel = -JUMP_POWER
+        if not (up or down or left or right):
+            self.xvel = 0 
+            self.yvel = 0
 
-            self.onGround = False 
-            self.rect.y += self.yvel
-            self.collide(0, self.yvel, platforms)
+        self.rect.x += self.xvel
+        self.rect.y += self.yvel
 
-            self.rect.x += self.xvel
-            self.collide(self.xvel, 0, platforms)
-            self.boltAnimJump.blit(self.image, (0, 0))
+    def draw(self, screen): # Выводим себя на экран
+        screen.blit(self.image, (self.rect.x,self.rect.y))
 
-    def collide(self, xvel, yvel, platforms):
-        for p in platforms:
-            if sprite.collide_rect(self, p):
+class Pistolet(Player):
+    def set_center(self):
+        cx = 0,5 * 55 
+        cy = 0,5 * 55
 
-                if xvel > 0:
-                    self.rect.right = p.rect.left
+    def __init__(self, x, y, image_filename):
+        super().__init__(x, y, image_filename)
+        self.set_center()
 
-                if xvel < 0:
-                    self.rect.left = p.rect.right
+    def update(self, left, right, up, down):
+        super().update(left, right, up, down)
+        self.set_center()
 
-                if yvel > 0:
-                    self.rect.bottom = p.rect.top
-                    self.onGround = True
-                    self.yvel = 0
-
-                if yvel < 0:
-                    self.rect.top = p.rect.bottom 
-                    self.yvel = 0
